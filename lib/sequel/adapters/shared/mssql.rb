@@ -802,9 +802,8 @@ module Sequel
         elsif @opts[:output]
           statements = multi_insert_sql(columns, values)
           ds = naked
-          @db.transaction(opts.merge(:server=>@opts[:server])) do
-            statements.map{|st| ds.with_sql(st)}
-          end.first.map{|v| v.length == 1 ? v.values.first : v}
+          statements.map{|st| ds.with_sql(st)}.first
+              .map{|v| v.length == 1 ? v.values.first : v}
         else
           super
         end

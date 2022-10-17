@@ -314,13 +314,17 @@ module Sequel
     # Inserts multiple records into the associated table. This method can be
     # used to efficiently insert a large number of records into a table in a
     # single query if the database supports it. Inserts
-    # are automatically wrapped in a transaction.
+    # are automatically wrapped in a transaction if necessary.
     # 
     # This method is called with a columns array and an array of value arrays:
     #
     #   DB[:table].import([:x, :y], [[1, 2], [3, 4]])
     #   # INSERT INTO table (x, y) VALUES (1, 2) 
-    #   # INSERT INTO table (x, y) VALUES (3, 4) 
+    #   # INSERT INTO table (x, y) VALUES (3, 4)
+    #
+    # or, if the database supports it:
+    #
+    #   # INSERT INTO table (x, y) VALUES (1, 2), (3, 4)
     #
     # This method also accepts a dataset instead of an array of value arrays:
     #
@@ -330,7 +334,9 @@ module Sequel
     # Options:
     # :commit_every :: Open a new transaction for every given number of records.
     #                  For example, if you provide a value of 50, will commit
-    #                  after every 50 records.
+    #                  after every 50 records. For databases where a transaction
+    #                  is not required, this option controls the maximum number
+    #                  of values to insert with a single statement.
     # :return :: When this is set to :primary_key, returns an array of
     #            autoincremented primary key values for the rows inserted.
     #            This does not have an effect if +values+ is a Dataset.
