@@ -887,6 +887,25 @@ module Sequel
       def update_ignore
         clone(:update_ignore=>true)
       end
+
+      protected
+
+      # TODO
+      # https://dev.mysql.com/doc/refman/8.0/en/commit.html
+      # there's an autocommit mode which can be turned off!
+      def _import(columns, values, opts)
+        trans_opts = Hash[opts]
+        trans_opts[:server] = @opts[:server]
+        if opts[:return] == :primary_key
+          @db.transaction(trans_opts){values.map{|v| insert(columns, v)}}
+        else
+          # We don't need to wrap our inserts in a transaction, one
+          # multi-insert operation is enough: it's already an atomic
+          # operation.
+          stmts = multi_insert_sql(columns, values)
+          stmts.each{|st| execute_dui(st)}
+        end
+      end
       
       private
 
