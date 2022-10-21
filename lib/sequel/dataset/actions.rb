@@ -1029,7 +1029,8 @@ module Sequel
 
     # Internals of #import.  If primary key values are requested, use
     # separate insert commands for each row.  Otherwise, call #multi_insert_sql
-    # and execute each statement it gives separately.
+    # and execute each statement it gives separately. A transaction iss only used
+    # if there are multiple statements to execute.
     def _import(columns, values, opts)
       trans_opts = Hash[opts]
       trans_opts[:server] = @opts[:server]
@@ -1037,7 +1038,11 @@ module Sequel
         @db.transaction(trans_opts){values.map{|v| insert(columns, v)}}
       else
         stmts = multi_insert_sql(columns, values)
-        @db.transaction(trans_opts){stmts.each{|st| execute_dui(st)}}
+        if stmts.length == 1
+          execute_dui(stmts[0]) # only one statement: no need for a transaction
+        else
+          @db.transaction(trans_opts){stmts.each{|st| execute_dui(st)}}
+        end
       end
     end
   
